@@ -1,9 +1,7 @@
 package com.talessousa.todosimple.controllers;
 
 import com.talessousa.todosimple.models.Agente;
-import com.talessousa.todosimple.models.Reporte;
 import com.talessousa.todosimple.services.AgenteService;
-import com.talessousa.todosimple.services.ReporteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +14,6 @@ public class AgenteController {
 
     @Autowired
     private AgenteService agenteService;
-    
-    @Autowired
-    private ReporteService reporteService;
 
     @PostMapping
     public ResponseEntity<Agente> create(@RequestBody Agente agente) {
@@ -57,12 +52,4 @@ public class AgenteController {
         return ResponseEntity.notFound().build();
     }
 
-    @GetMapping("/{id}/reportes")
-    public ResponseEntity<List<Reporte>> getReportesPorAgente(@PathVariable Long id) {
-        if (!agenteService.findById(id).isPresent()) {
-            return ResponseEntity.notFound().build();
-        }
-        List<Reporte> reportes = reporteService.findByAgenteId(id);
-        return ResponseEntity.ok(reportes);
-    }
 }

@@ -15,7 +15,7 @@ public class Pessoa {
     @Column(nullable = false, length = 100)
     private String nome;
 
-    @Column(nullable = false, unique = true, length = 11)
+    @Column(nullable = false, unique = true, length = 11, updatable = false)
     private String cpf;
 
     @Column(length = 20)

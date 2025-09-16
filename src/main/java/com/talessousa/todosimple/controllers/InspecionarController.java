@@ -1,9 +1,7 @@
 package com.talessousa.todosimple.controllers;
 
 import com.talessousa.todosimple.models.Inspecionar;
-import com.talessousa.todosimple.models.Reporte;
 import com.talessousa.todosimple.services.InspecionarService;
-import com.talessousa.todosimple.services.ReporteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +14,6 @@ public class InspecionarController {
 
     @Autowired
     private InspecionarService inspecionarService;
-    
-    @Autowired
-    private ReporteService reporteService;
 
     @PostMapping
     public ResponseEntity<Inspecionar> create(@RequestBody Inspecionar inspecionar) {
@@ -58,12 +53,4 @@ public class InspecionarController {
         return ResponseEntity.notFound().build();
     }
 
-    @GetMapping("/{id}/reportes")
-    public ResponseEntity<List<Reporte>> getReportesPorInspecionar(@PathVariable Long id) {
-        if (!inspecionarService.findById(id).isPresent()) {
-            return ResponseEntity.notFound().build();
-        }
-        List<Reporte> reportes = reporteService.findByInspecionarId(id);
-        return ResponseEntity.ok(reportes);
-    }
 }

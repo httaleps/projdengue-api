@@ -37,15 +37,8 @@ public class ReporteService {
         return reporteRepository.findByLocalizacaoId(localizacaoId);
     }
 
-    public List<Reporte> findByUsuarioId(Long UsuarioId){
-        return reporteRepository.findByUsuarioId(UsuarioId);
+    public List<Reporte> findByUsuarioId(Long usuarioId){
+        return reporteRepository.findByUsuarioId(usuarioId);
     }
 
-    public List<Reporte> findByInspecionarId(Long InspecionarId){
-        return reporteRepository.findByUsuarioId(InspecionarId);
-    }
-
-    public List<Reporte> findByAgenteId(Long AgenteId){
-        return reporteRepository.findByUsuarioId(AgenteId);
-    }
 }
