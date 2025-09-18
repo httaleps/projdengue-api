@@ -1,7 +1,10 @@
 package com.talessousa.todosimple.controllers;
 
 import com.talessousa.todosimple.models.Agente;
+import com.talessousa.todosimple.models.Inspecionar;
 import com.talessousa.todosimple.services.AgenteService;
+import com.talessousa.todosimple.services.InspecionarService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +17,9 @@ public class AgenteController {
 
     @Autowired
     private AgenteService agenteService;
+
+    @Autowired
+    private InspecionarService inspecionarService;
 
     @PostMapping
     public ResponseEntity<Agente> create(@RequestBody Agente agente) {
@@ -36,8 +42,8 @@ public class AgenteController {
     @PutMapping("/{id}")
     public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody Agente agente) {
         return agenteService.findById(id).map(p -> {
-            p.setMatricula(agente.getMatricula());
-            p.setSetor(agente.getSetor());
+            if (agente.getMatricula() != null) p.setMatricula(agente.getMatricula());          
+            if (agente.getSetor() != null) p.setSetor(agente.getSetor());
             agenteService.save(p);
             return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
         }).orElse(ResponseEntity.notFound().build());
@@ -50,6 +56,15 @@ public class AgenteController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/{id}/inspecionar")
+    public ResponseEntity<List<Inspecionar>> getInspecoesPorAgente(@PathVariable Long id) {
+        if (!agenteService.findById(id).isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        List<Inspecionar> inspecoes = inspecionarService.findByAgenteId(id);
+        return ResponseEntity.ok(inspecoes);
     }
 
 }

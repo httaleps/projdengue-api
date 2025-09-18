@@ -42,8 +42,8 @@ public class ReporteController {
     @PutMapping("/{id}")
     public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody Reporte reporte) {
         return reporteService.findById(id).map(r -> {
-            r.setStatus(reporte.getStatus());
-            r.setDescricao(reporte.getDescricao());
+            if (reporte.getStatus() != null) r.setStatus(reporte.getStatus());
+            if (reporte.getDescricao() != null) r.setDescricao(reporte.getDescricao());
             reporteService.save(r);
             return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
         }).orElse(ResponseEntity.notFound().build());

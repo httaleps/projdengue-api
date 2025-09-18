@@ -41,14 +41,15 @@ public class LocalizacaoController {
     @PutMapping("/{id}")
     public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody Localizacao localizacao) {
         return localizacaoService.findById(id).map(p -> {
-            p.setLogradouro(localizacao.getLogradouro());
-            p.setNumero(localizacao.getNumero());
-            p.setBairro(localizacao.getBairro());
-            p.setCidade(localizacao.getCidade());
-            p.setUf(localizacao.getUf());
-            p.setCep(localizacao.getCep());
-            p.setLatitude(localizacao.getLatitude());
-            p.setLongitude(localizacao.getLongitude());
+            // p.setLogradouro(localizacao.getLogradouro());
+            if (localizacao.getLogradouro() != null) p.setLogradouro(localizacao.getLogradouro());
+            if (localizacao.getNumero() != null) p.setNumero(localizacao.getNumero());
+            if (localizacao.getBairro() != null) p.setBairro(localizacao.getBairro());
+            if (localizacao.getCidade() != null) p.setCidade(localizacao.getCidade());
+            if (localizacao.getUf() != null) p.setUf(localizacao.getUf());
+            if (localizacao.getCep() != null) p.setLogradouro(localizacao.getLogradouro());
+            if (localizacao.getLatitude() != null) p.setLogradouro(localizacao.getLogradouro());
+            if (localizacao.getLongitude() != null) p.setLongitude(localizacao.getLongitude());
             localizacaoService.save(p);
             return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
         }).orElse(ResponseEntity.notFound().build());

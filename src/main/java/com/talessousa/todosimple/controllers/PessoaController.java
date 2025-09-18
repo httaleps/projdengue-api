@@ -38,13 +38,14 @@ public class PessoaController {
         return ResponseEntity.ok(pessoaService.findAll());
     }
 
-    @PutMapping("/{id}")
+   @PutMapping("/{id}")
     public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody Pessoa pessoa) {
         return pessoaService.findById(id).map(p -> {
-            p.setNome(pessoa.getNome());
-            p.setCpf(pessoa.getCpf());
-            p.setEmail(pessoa.getEmail());
-            p.setTelefone(pessoa.getTelefone());
+            if (pessoa.getNome() != null) p.setNome(pessoa.getNome());
+            if (pessoa.getCpf() != null) p.setCpf(pessoa.getCpf());
+            if (pessoa.getEmail() != null) p.setEmail(pessoa.getEmail());
+            if (pessoa.getTelefone() != null) p.setTelefone(pessoa.getTelefone());
+
             pessoaService.save(p);
             return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
         }).orElse(ResponseEntity.notFound().build());

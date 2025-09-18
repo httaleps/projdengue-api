@@ -41,8 +41,9 @@ public class UsuarioController {
     @PutMapping("/{id}")
     public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody Usuario usuario) {
         return usuarioService.findById(id).map(p -> {
-            p.setEmail(usuario.getEmail());
-            p.setTelefone(usuario.getTelefone());
+            if (usuario.getEmail() != null) p.setEmail(usuario.getEmail());
+            if (usuario.getTelefone() != null) p.setTelefone(usuario.getTelefone());
+
             usuarioService.save(p);
             return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
         }).orElse(ResponseEntity.notFound().build());

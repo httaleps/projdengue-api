@@ -9,6 +9,7 @@ import java.util.Optional;
 
 @Service
 public class AgenteService {
+
     @Autowired
     private AgenteRepository agenteRepository;
 
@@ -27,4 +28,5 @@ public class AgenteService {
     public void deleteById(Long id) {
         agenteRepository.deleteById(id);
     }
+
 }

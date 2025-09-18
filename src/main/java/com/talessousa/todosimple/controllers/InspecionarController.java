@@ -36,9 +36,10 @@ public class InspecionarController {
     @PutMapping("/{id}")
     public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody Inspecionar inspecionar) {
         return inspecionarService.findById(id).map(p -> {
-            p.setDataInspecao(inspecionar.getDataInspecao());
-            p.setObservacao(inspecionar.getObservacao());
-            p.setResultado(inspecionar.getResultado());
+            // p.setDataInspecao(inspecionar.getDataInspecao());
+            if (inspecionar.getDataInspecao() != null) p.setDataInspecao(inspecionar.getDataInspecao());
+            if (inspecionar.getObservacao() != null) p.setObservacao(inspecionar.getObservacao());
+            if (inspecionar.getResultado() != null) p.setResultado(inspecionar.getResultado());
             inspecionarService.save(p);
             return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
         }).orElse(ResponseEntity.notFound().build());

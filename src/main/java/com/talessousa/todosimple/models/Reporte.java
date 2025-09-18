@@ -21,7 +21,7 @@ public class Reporte {
     @JoinColumn(name = "pessoa_id", nullable = false)
     private Pessoa pessoa;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "localizacao_id", nullable = false)
     private Localizacao localizacao;
 
