@@ -4,68 +4,64 @@ import com.talessousa.todosimple.models.Pessoa;
 import com.talessousa.todosimple.models.Reporte;
 import com.talessousa.todosimple.services.PessoaService;
 import com.talessousa.todosimple.services.ReporteService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 import java.util.List;
 
 @RestController
 @RequestMapping("/pessoa")
+@Validated
 public class PessoaController {
 
     @Autowired
     private PessoaService pessoaService;
-    
+
     @Autowired
     private ReporteService reporteService;
 
-    @PostMapping
-    public ResponseEntity<Pessoa> create(@RequestBody Pessoa pessoa) {
-        Pessoa savedPessoa = pessoaService.save(pessoa);
-        return new ResponseEntity<>(savedPessoa, HttpStatus.CREATED);
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<Pessoa> findById(@PathVariable Long id) {
-        return pessoaService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Pessoa obj = pessoaService.findById(id);
+        return ResponseEntity.ok().body(obj);
     }
-    
+
     @GetMapping
     public ResponseEntity<List<Pessoa>> findAll() {
-        return ResponseEntity.ok(pessoaService.findAll());
+        List<Pessoa> list = pessoaService.findAll();
+        return ResponseEntity.ok().body(list);
     }
 
-   @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody Pessoa pessoa) {
-        return pessoaService.findById(id).map(p -> {
-            if (pessoa.getNome() != null) p.setNome(pessoa.getNome());
-            if (pessoa.getCpf() != null) p.setCpf(pessoa.getCpf());
-            if (pessoa.getEmail() != null) p.setEmail(pessoa.getEmail());
-            if (pessoa.getTelefone() != null) p.setTelefone(pessoa.getTelefone());
+    @PostMapping
+    public ResponseEntity<Void> create(@Valid @RequestBody Pessoa obj) {
+        Pessoa newObj = pessoaService.create(obj);
+        URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}").buildAndExpand(newObj.getId()).toUri();
+        return ResponseEntity.created(uri).build();
+    }
 
-            pessoaService.save(p);
-            return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
-        }).orElse(ResponseEntity.notFound().build());
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> update(@PathVariable Long id, @Valid @RequestBody Pessoa obj) {
+        obj.setId(id);
+        pessoaService.update(obj);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (pessoaService.findById(id).isPresent()) {
-            pessoaService.deleteById(id);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+        pessoaService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/reportes")
     public ResponseEntity<List<Reporte>> getReportesPorPessoa(@PathVariable Long id) {
-        if (!pessoaService.findById(id).isPresent()) {
-            return ResponseEntity.notFound().build();
-        }
-        List<Reporte> reportes = reporteService.findByPessoaId(id);
-        return ResponseEntity.ok(reportes);
+        pessoaService.findById(id);
+        List<Reporte> list = reporteService.findByPessoaId(id);
+        return ResponseEntity.ok().body(list);
     }
 }

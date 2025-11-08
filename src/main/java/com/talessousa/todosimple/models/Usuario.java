@@ -31,10 +31,10 @@ public class Usuario {
     @Column(nullable = false, length = 100)
     @NotBlank(message = "O campo email não pode estar vazio.")
     @Email(message = "O campo email deve conter um endereço de email válido.")
-    @Size(max = 100, message = "O campo email não pode exceder {max} caracteres.")
+    @Size(max = 100, message = "O campo email não pode exceder 100 caracteres.")
     private String email;
 
     @Column(length = 20)
-    @Size(max = 11, message = "O campo telefone não pode exceder {max} caracteres.")
+    @Size(max = 11, message = "O campo telefone não pode exceder 20 caracteres.")
     private String telefone;
 }

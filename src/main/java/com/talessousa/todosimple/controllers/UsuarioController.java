@@ -1,69 +1,71 @@
 package com.talessousa.todosimple.controllers;
 
-import com.talessousa.todosimple.models.Usuario;
 import com.talessousa.todosimple.models.Reporte;
-import com.talessousa.todosimple.services.UsuarioService;
+import com.talessousa.todosimple.models.Usuario;
 import com.talessousa.todosimple.services.ReporteService;
+import com.talessousa.todosimple.services.UsuarioService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 import java.util.List;
 
 @RestController
 @RequestMapping("/usuario")
+@Validated // Ativa validações de @PathVariable e @RequestParam
 public class UsuarioController {
 
     @Autowired
     private UsuarioService usuarioService;
-    
+
     @Autowired
     private ReporteService reporteService;
 
-    @PostMapping
-    public ResponseEntity<Usuario> create(@RequestBody Usuario usuario) {
-        Usuario savedUsuario = usuarioService.save(usuario);
-        return new ResponseEntity<>(savedUsuario, HttpStatus.CREATED);
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<Usuario> findById(@PathVariable Long id) {
-        return usuarioService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        // Serviço lança 404 automaticamente se não encontrar
+        Usuario obj = usuarioService.findById(id);
+        return ResponseEntity.ok().body(obj);
     }
-    
+
     @GetMapping
     public ResponseEntity<List<Usuario>> findAll() {
-        return ResponseEntity.ok(usuarioService.findAll());
+        List<Usuario> list = usuarioService.findAll();
+        return ResponseEntity.ok().body(list);
+    }
+
+    @PostMapping
+    public ResponseEntity<Void> create(@Valid @RequestBody Usuario obj) {
+        Usuario newObj = usuarioService.create(obj);
+        URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}").buildAndExpand(newObj.getId()).toUri();
+        return ResponseEntity.created(uri).build();
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody Usuario usuario) {
-        return usuarioService.findById(id).map(p -> {
-            if (usuario.getEmail() != null) p.setEmail(usuario.getEmail());
-            if (usuario.getTelefone() != null) p.setTelefone(usuario.getTelefone());
-
-            usuarioService.save(p);
-            return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
-        }).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Void> update(@PathVariable Long id, @Valid @RequestBody Usuario obj) {
+        obj.setId(id); // Garante consistência entre URL e corpo
+        usuarioService.update(obj); // Método update do serviço cuida da lógica
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (usuarioService.findById(id).isPresent()) {
-            usuarioService.deleteById(id);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+        usuarioService.delete(id);
+        return ResponseEntity.noContent().build();
     }
+
+    // --- Endpoints Relacionados ---
 
     @GetMapping("/{id}/reportes")
     public ResponseEntity<List<Reporte>> getReportesPorUsuario(@PathVariable Long id) {
-        if (!usuarioService.findById(id).isPresent()) {
-            return ResponseEntity.notFound().build();
-        }
-        List<Reporte> reportes = reporteService.findByUsuarioId(id);
-        return ResponseEntity.ok(reportes);
+        // Garante que o usuário existe antes de buscar seus reportes
+        usuarioService.findById(id);
+        List<Reporte> list = reporteService.findByUsuarioId(id);
+        return ResponseEntity.ok().body(list);
     }
 }
