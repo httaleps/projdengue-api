@@ -39,7 +39,7 @@ public class InspecionarController {
             // p.setDataInspecao(inspecionar.getDataInspecao());
             if (inspecionar.getDataInspecao() != null) p.setDataInspecao(inspecionar.getDataInspecao());
             if (inspecionar.getObservacao() != null) p.setObservacao(inspecionar.getObservacao());
-            if (inspecionar.getResultado() != null) p.setResultado(inspecionar.getResultado());
+            if (inspecionar.getStatus() != null) p.setStatus(inspecionar.getStatus());
             inspecionarService.save(p);
             return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
         }).orElse(ResponseEntity.notFound().build());
