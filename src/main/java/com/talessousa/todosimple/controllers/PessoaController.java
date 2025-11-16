@@ -1,7 +1,7 @@
 package com.talessousa.todosimple.controllers;
 
 import com.talessousa.todosimple.models.Pessoa;
-import com.talessousa.todosimple.models.Reporte;
+import com.talessousa.todosimple.models.projection.ReporteProjection;
 import com.talessousa.todosimple.services.PessoaService;
 import com.talessousa.todosimple.services.ReporteService;
 import jakarta.validation.Valid;
@@ -59,9 +59,9 @@ public class PessoaController {
     }
 
     @GetMapping("/{id}/reportes")
-    public ResponseEntity<List<Reporte>> getReportesPorPessoa(@PathVariable Long id) {
+    public ResponseEntity<List<ReporteProjection>> getReportesPorPessoa(@PathVariable Long id) {
         pessoaService.findById(id);
-        List<Reporte> list = reporteService.findByPessoaId(id);
+        List<ReporteProjection> list = reporteService.findByPessoaId(id);
         return ResponseEntity.ok().body(list);
     }
 }

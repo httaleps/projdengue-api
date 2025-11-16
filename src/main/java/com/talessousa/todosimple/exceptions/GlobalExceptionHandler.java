@@ -1,5 +1,6 @@
 package com.talessousa.todosimple.exceptions;
 
+import com.talessousa.todosimple.services.exceptions.AuthorizationException;
 import com.talessousa.todosimple.services.exceptions.DataBindingViolationException;
 import com.talessousa.todosimple.services.exceptions.ObjectNotFoundException;
 
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -34,8 +36,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @Value("${server.error.include-exception:false}")
     private boolean printStackTrace;
 
-
-    // Handler para @Valid e @Validated (MethodArgumentNotValidException)
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             @NonNull MethodArgumentNotValidException ex,
@@ -102,8 +102,26 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return buildErrorResponse(ex, message != null ? message : "Data integrity violation", HttpStatus.CONFLICT, request);
     }
 
+    // Handler para AuthorizationException (403)
+    @ExceptionHandler(AuthorizationException.class)
+    public ResponseEntity<Object> handleAuthorizationException(
+            AuthorizationException ex,
+            WebRequest request) {
+        log.warn("Acesso negado: {}", ex.getMessage());
+        return buildErrorResponse(ex, ex.getMessage(), HttpStatus.FORBIDDEN, request);
+    }
 
-    // Handler para falhas de autenticação (ex: login inválido)
+    // Handler para AccessDeniedException (403)
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Object> handleAccessDeniedException(
+            AccessDeniedException ex,
+            WebRequest request) {
+        log.warn("Acesso negado pelo Spring Security");
+        return buildErrorResponse(ex, "Acesso negado", HttpStatus.FORBIDDEN, request);
+    }
+
+
+    // Handler para falhas de autenticação 403 (ex: login inválido)
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<Object> handleAuthenticationException(
             AuthenticationException ex,
@@ -123,14 +141,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return buildErrorResponse(ex, message, HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
 
-
-    // Método utilitário para construir respostas de erro
     private ResponseEntity<Object> buildErrorResponse(
             Exception ex,
             String message,
             HttpStatus status,
             WebRequest request) {
-
 
         ErrorResponse errorResponse = new ErrorResponse(status.value(), message);
 
@@ -139,12 +154,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             errorResponse.setStackTrace(getStackTraceAsString(ex));
         }
 
-
         return ResponseEntity.status(status).body(errorResponse);
     }
 
-
-    // Converte o stack trace em String sem depender do Apache Commons
     private String getStackTraceAsString(Exception ex) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);

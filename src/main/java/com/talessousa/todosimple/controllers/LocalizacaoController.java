@@ -1,7 +1,7 @@
 package com.talessousa.todosimple.controllers;
 
 import com.talessousa.todosimple.models.Localizacao;
-import com.talessousa.todosimple.models.Reporte;
+import com.talessousa.todosimple.models.projection.ReporteProjection;
 import com.talessousa.todosimple.services.LocalizacaoService;
 import com.talessousa.todosimple.services.ReporteService;
 import jakarta.validation.Valid;
@@ -59,9 +59,9 @@ public class LocalizacaoController {
     }
 
     @GetMapping("/{id}/reportes")
-    public ResponseEntity<List<Reporte>> getReportesPorLocalizacao(@PathVariable Long id) {
+    public ResponseEntity<List<ReporteProjection>> getReportesPorLocalizacao(@PathVariable Long id) {
         localizacaoService.findById(id);
-        List<Reporte> list = reporteService.findByLocalizacaoId(id);
+        List<ReporteProjection> list = reporteService.findByLocalizacaoId(id);
         return ResponseEntity.ok().body(list);
     }
 }

@@ -1,16 +1,22 @@
 package com.talessousa.todosimple.services;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.talessousa.todosimple.models.Reporte;
+import com.talessousa.todosimple.models.Usuario;
+import com.talessousa.todosimple.models.enums.ProfileEnum;
+import com.talessousa.todosimple.models.projection.ReporteProjection;
 import com.talessousa.todosimple.repositories.ReporteRepository;
+import com.talessousa.todosimple.security.UserSpringSecurity;
+import com.talessousa.todosimple.services.exceptions.AuthorizationException;
 import com.talessousa.todosimple.services.exceptions.DataBindingViolationException;
 import com.talessousa.todosimple.services.exceptions.ObjectNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Service;
+
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ReporteService {
@@ -22,43 +28,55 @@ public class ReporteService {
     private UsuarioService usuarioService;
 
     @Autowired
-    private PessoaService pessoaService;      // Injetar PessoaService
+    private PessoaService pessoaService;
 
     @Autowired
-    private LocalizacaoService localizacaoService; // Injetar LocalizacaoService
+    private LocalizacaoService localizacaoService;
 
     public Reporte findById(Long id) {
-        Optional<Reporte> obj = reporteRepository.findById(id);
-        return obj.orElseThrow(() -> new ObjectNotFoundException(
-                "Reporte ID " + id + " não encontrada."));
-    }
+        Reporte reporte = reporteRepository.findById(id)
+                .orElseThrow(() -> new ObjectNotFoundException(
+                        "Reporte ID " + id + " não encontrado. Tipo: " + Reporte.class.getName()));
 
-    @Transactional
-    public Reporte create(Reporte obj) {
-        obj.setId(null);
-
-        // 1. Valida Usuário
-        if (obj.getUsuario() != null && obj.getUsuario().getId() != null) {
-             try {
-                 usuarioService.findById(obj.getUsuario().getId());
-             } catch (ObjectNotFoundException e) {
-                 throw new DataBindingViolationException("Falha ao criar reporte: Usuário inexistente! Id: " + obj.getUsuario().getId());
-             }
+        UserSpringSecurity authenticatedUsuario = UsuarioService.authenticated();
+        if (authenticatedUsuario == null || 
+            (!authenticatedUsuario.hasRole(ProfileEnum.ADMIN) &&
+            !isOwner(authenticatedUsuario, reporte))) {
+            throw new AuthorizationException("Acesso negado.");
         }
 
-        // 2. Valida Pessoa (Novo)
+        return reporte;
+    }
+
+    public List<ReporteProjection> findAllByUsuario(){
+        UserSpringSecurity usuario = UsuarioService.authenticated();
+        if (usuario == null) {
+            throw new AuthorizationException("Acesso negado.");
+        }
+        return reporteRepository.findByUsuario_Id(usuario.getId());
+    } 
+    
+    @Transactional
+    public Reporte create(Reporte obj) {
+        UserSpringSecurity usuario = UsuarioService.authenticated();
+        if (usuario == null) {
+            throw new AuthorizationException("Acesso negado.");
+        }
+        Usuario owner = usuarioService.findById(usuario.getId());
+        obj.setUsuario(owner);
+        obj.setId(null);
+
         if (obj.getPessoa() != null && obj.getPessoa().getId() != null) {
             try {
-                pessoaService.findById(obj.getPessoa().getId());
+                obj.setPessoa(pessoaService.findById(obj.getPessoa().getId()));
             } catch (ObjectNotFoundException e) {
                 throw new DataBindingViolationException("Falha ao criar reporte: Pessoa inexistente! Id: " + obj.getPessoa().getId());
             }
         }
 
-        // 3. Valida Localização (Novo)
         if (obj.getLocalizacao() != null && obj.getLocalizacao().getId() != null) {
             try {
-                localizacaoService.findById(obj.getLocalizacao().getId());
+                obj.setLocalizacao(localizacaoService.findById(obj.getLocalizacao().getId()));
             } catch (ObjectNotFoundException e) {
                 throw new DataBindingViolationException("Falha ao criar reporte: Localização inexistente! Id: " + obj.getLocalizacao().getId());
             }
@@ -69,38 +87,37 @@ public class ReporteService {
 
     @Transactional
     public Reporte update(Reporte obj) {
-        Reporte newObj = findById(obj.getId());
-        newObj.setDescricao(obj.getDescricao());
-        newObj.setStatus(obj.getStatus());
-        // Se permitir alterar Usuario/Pessoa/Localizacao no update, precisará validar aqui também.
-        return reporteRepository.save(newObj);
+        Reporte existing = findById(obj.getId());
+        existing.setDescricao(obj.getDescricao());
+        return reporteRepository.save(existing);
     }
 
     public void delete(Long id) {
         findById(id);
         try {
             reporteRepository.deleteById(id);
-        } catch (DataIntegrityViolationException e) {
+        } catch (Exception e) {
             throw new DataBindingViolationException("Não é possível excluir pois há entidades relacionadas (Inspecção)!");
         }
     }
 
-    public List<Reporte> findAll() {
-        return reporteRepository.findAll();
-    }
-
-    public List<Reporte> findByPessoaId(Long pessoaId) {
-        pessoaService.findById(pessoaId); // Valida se pessoa existe antes de buscar
+    public List<ReporteProjection> findByPessoaId(Long pessoaId) {
+        pessoaService.findById(pessoaId);
         return reporteRepository.findByPessoaId(pessoaId);
     }
 
-    public List<Reporte> findByLocalizacaoId(Long localizacaoId) {
-        localizacaoService.findById(localizacaoId); // Valida se localizacao existe antes de buscar
+    public List<ReporteProjection> findByLocalizacaoId(Long localizacaoId) {
+        localizacaoService.findById(localizacaoId);
         return reporteRepository.findByLocalizacaoId(localizacaoId);
     }
 
-    public List<Reporte> findByUsuarioId(Long usuarioId){
-        usuarioService.findById(usuarioId); // Valida se usuario existe antes de buscar
+    public List<ReporteProjection> findByUsuarioId(Long usuarioId) {
+        usuarioService.findById(usuarioId); // Garante que o usuário existe antes de buscar
         return reporteRepository.findByUsuarioId(usuarioId);
     }
+
+    private boolean isOwner(UserSpringSecurity usuario, Reporte reporte) {
+        return reporte.getUsuario().getId().equals(usuario.getId());
+    }
+    
 }

@@ -1,6 +1,8 @@
 package com.talessousa.todosimple.models;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -17,15 +19,16 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,9 +37,10 @@ import lombok.Setter;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 
 @Entity
-@Table(name = "usuario")
+@Table(name = Usuario.TABLE_NAME)
 @AllArgsConstructor
 @NoArgsConstructor
+@Data
 @Getter
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -61,24 +65,20 @@ public class Usuario {
     @NotNull(groups = CreateUsuario.class)
     @NotEmpty(groups = CreateUsuario.class)
     @Size(groups = CreateUsuario.class, min = 2, max = 100)
+    @NotBlank
     private String usuario;
-
-    @Column(nullable = false, length = 100)
-    @NotBlank(message = "O campo email não pode estar vazio.")
-    @Email(message = "O campo email deve conter um endereço de email válido.")
-    @Size(max = 100, message = "O campo email não pode exceder 100 caracteres.")
-    private String email;
-
-    @Column(length = 20)
-    @Size(max = 11, message = "O campo telefone não pode exceder 20 caracteres.")
-    private String telefone;
 
     @JsonProperty(access = Access.WRITE_ONLY)
     @Column(name = "senha", length = 60, nullable = false)
     @NotNull(groups = CreateUsuario.class)
     @NotEmpty(groups = CreateUsuario.class)
     @Size(groups = CreateUsuario.class, min = 8, max = 60)
+    @NotBlank
     private String senha;
+
+    @OneToMany(mappedBy = "usuario")
+    @JsonProperty(access = Access.WRITE_ONLY)
+    private List<Reporte> reportes = new ArrayList<>();
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)

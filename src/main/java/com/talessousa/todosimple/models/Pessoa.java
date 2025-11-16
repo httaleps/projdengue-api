@@ -1,29 +1,40 @@
 package com.talessousa.todosimple.models;
 
-import org.hibernate.validator.constraints.br.CPF;
-
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import lombok.Data;
+
+
 @Entity
-@Table(name = "pessoa")
+@Table(name = Pessoa.TABLE_NAME)
 @AllArgsConstructor
 @NoArgsConstructor
+@Data
 @Getter
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Pessoa {
 
+    public static final String TABLE_NAME = "pessoa";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
+    @Column(name = "id", unique = true)
     private Long id;
 
     @Column(nullable = false, length = 100)
@@ -34,7 +45,6 @@ public class Pessoa {
     @Column(nullable = false, unique = true, length = 11, updatable = false)
     @NotBlank(message = "O CPF não pode estar vazio.")
     @Size(min = 11, max = 11, message = "O CPF deve ter 11 caracteres.")
-    @CPF(message = "O CPF informado é inválido.")
     private String cpf;
 
     @Column(length = 20)
