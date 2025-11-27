@@ -1,108 +1,102 @@
-const API_URL = "http://localhost:8080/task";
-const USER_ID = 1;
+const BASE_URL = 'http://localhost:8080'; 
+let tokenJwt = localStorage.getItem('jwt') || '';
 
-// Carregar tarefas ao iniciar
-document.addEventListener("DOMContentLoaded", () => {
-  loadTasks();
-});
+// Elementos
+const formLogin = document.getElementById('formLogin');
+const tokenPreview = document.getElementById('tokenPreview');
+const msgLogin = document.getElementById('msgLogin');
+const btnListar = document.getElementById('btnListar');
+const msgCors = document.getElementById('msgCors');
+const listaUsuarios = document.getElementById('listaUsuarios');
 
-// Enviar formulário
-document.getElementById("taskForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const taskId = document.getElementById("taskId").value;
-  const description = document.getElementById("description").value.trim();
+// Mostra token salvo se existir
+if(tokenJwt) tokenPreview.innerText = tokenJwt.substring(0, 20) + '...';
 
-  const task = { description, user: { id: USER_ID } };
+// --- LOGIN ---
+formLogin.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-  try {
-    if (taskId) {
-      // Atualizar
-      await fetch(`${API_URL}/${taskId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(task)
-      });
-    } else {
-      // Criar
-      await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(task)
-      });
+    const loginInput = document.getElementById('inputLogin');
+    const senhaInput = document.getElementById('inputSenha');
+
+    // Validação extra pra não dar erro de null
+    if (!loginInput || !senhaInput) {
+        console.error("ERRO CRÍTICO: Não achei os inputs no HTML. Verifique os IDs.");
+        return;
     }
-    resetForm();
-    loadTasks();
-  } catch (error) {
-    alert("Erro ao salvar tarefa!");
-    console.error(error);
-  }
+
+    const corpo = {
+        usuario: loginInput.value, // Verifique se seu Java espera 'login' ou 'username'
+        senha: senhaInput.value
+    };
+
+    try {
+        const response = await fetch(`${BASE_URL}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(corpo)
+        });
+
+        if (response.ok) {
+            // Tenta pegar o token do Header (padrão Spring Security)
+            let token = response.headers.get('Authorization');
+            
+            // Se não vier no Header, tenta pegar do JSON
+            if(!token) {
+                try {
+                    const json = await response.json();
+                    token = json.token || json.accessToken;
+                } catch(err) { console.log("Sem JSON na resposta"); }
+            }
+
+            if (token) {
+                // Remove 'Bearer ' se vier duplicado
+                tokenJwt = token.replace('Bearer ', '');
+                localStorage.setItem('jwt', tokenJwt);
+                
+                msgLogin.innerText = "Login OK!";
+                msgLogin.className = "status-box success";
+                msgLogin.style.display = "block";
+                tokenPreview.innerText = tokenJwt.substring(0, 20) + '...';
+            }
+        } else {
+            msgLogin.innerText = "Login Falhou: " + response.status;
+            msgLogin.className = "status-box error";
+            msgLogin.style.display = "block";
+        }
+    } catch (erro) {
+        msgLogin.innerText = "Erro: " + erro.message;
+        msgLogin.className = "status-box error";
+        msgLogin.style.display = "block";
+    }
 });
 
-// Cancelar edição
-document.getElementById("btnCancel").addEventListener("click", resetForm);
+// --- LISTAGEM ---
+btnListar.addEventListener('click', async () => {
+    listaUsuarios.innerHTML = '';
+    
+    if(!tokenJwt) return alert("Faça login antes!");
 
-// Carregar tarefas
-async function loadTasks() {
-  showLoading(true);
-  try {
-    const res = await fetch(`http://localhost:8080/task/user/${USER_ID}`);
-    const tasks = await res.json();
-    renderTasks(tasks);
-  } catch (error) {
-    console.error("Erro ao carregar tarefas:", error);
-    document.getElementById("tasksList").innerHTML = "<tr><td colspan='3' class='text-center'>Erro ao carregar</td></tr>";
-  } finally {
-    showLoading(false);
-  }
-}
+    try {
+        const response = await fetch(`${BASE_URL}/usuario`, {
+            headers: { 'Authorization': `Bearer ${tokenJwt}` }
+        });
 
-// Renderizar tabela
-function renderTasks(tasks) {
-  const tbody = document.getElementById("tasksList");
-  if (tasks.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="3" class="text-center">Nenhuma tarefa cadastrada</td></tr>`;
-    return;
-  }
+        if(response.ok) {
+            const lista = await response.json();
+            msgCors.innerText = "Sucesso! Dados recebidos.";
+            msgCors.className = "status-box success";
+            msgCors.style.display = "block";
 
-  tbody.innerHTML = tasks.map(t => `
-    <tr>
-      <td>${t.id}</td>
-      <td>${t.description}</td>
-      <td>
-        <button class="btn btn-sm btn-warning me-1" onclick="editTask(${t.id}, '${t.description.replace(/'/g, "\\'")}')">Editar</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteTask(${t.id})">Excluir</button>
-      </td>
-    </tr>
-  `).join("");
-}
-
-// Editar tarefa
-function editTask(id, description) {
-  document.getElementById("taskId").value = id;
-  document.getElementById("description").value = description;
-  document.getElementById("btnCancel").style.display = "inline-block";
-}
-
-// Excluir tarefa
-async function deleteTask(id) {
-  if (!confirm("Tem certeza que deseja excluir esta tarefa?")) return;
-  try {
-    await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-    loadTasks();
-  } catch (error) {
-    alert("Erro ao excluir tarefa!");
-    console.error(error);
-  }
-}
-
-// Resetar formulário
-function resetForm() {
-  document.getElementById("taskForm").reset();
-  document.getElementById("taskId").value = "";
-  document.getElementById("btnCancel").style.display = "none";
-}
-
-// Mostrar/ocultar loading
-function showLoading(show) {
-  document.getElementById("loading").style.display = show ? "block" : "none";
-}
+            lista.forEach(u => {
+                listaUsuarios.innerHTML += `<li class="list-group-item">${u.id} - ${u.usuario}</li>`;
+            });
+        } else {
+            throw new Error(response.status);
+        }
+    } catch (e) {
+        msgCors.innerText = "Erro: " + e.message;
+        msgCors.className = "status-box error";
+        msgCors.style.display = "block";
+    }
+});

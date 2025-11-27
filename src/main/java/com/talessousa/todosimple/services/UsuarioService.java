@@ -1,5 +1,6 @@
 package com.talessousa.todosimple.services;
 
+import java.util.List;
 import java.util.Set;  
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +38,7 @@ public class UsuarioService {
             throw new AuthorizationException("Acesso negado.");
         }
         return usuarioRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Usuário ID " + id + " não encontrado."));
+            .orElseThrow(() -> new ObjectNotFoundException("Usuário ID " + id + " não encontrado."));
     }
 
     @Transactional
@@ -65,6 +66,10 @@ public class UsuarioService {
         Usuario existingObj = findById(obj.getId());
         existingObj.setSenha(passwordEncoder.encode(obj.getSenha()));
         return usuarioRepository.save(existingObj);
+    }
+
+    public List<Usuario> findAll() {
+        return usuarioRepository.findAll();
     }
 
     public void delete(Long id) {

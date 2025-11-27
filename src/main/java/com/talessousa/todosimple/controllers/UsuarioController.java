@@ -1,6 +1,7 @@
 package com.talessousa.todosimple.controllers;
 
 import java.net.URI;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,12 @@ public class UsuarioController {
     public ResponseEntity<Usuario> findById(@PathVariable Long id) {
         Usuario obj = usuarioService.findById(id);
         return ResponseEntity.ok(obj);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Usuario>> findAll() {
+        List<Usuario> list = usuarioService.findAll();
+        return ResponseEntity.ok(list);
     }
 
     @PostMapping

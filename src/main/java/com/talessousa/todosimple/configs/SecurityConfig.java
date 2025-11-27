@@ -27,7 +27,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public class SecurityConfig {
 
     private static final String[] PUBLIC_MATCHERS = { "/" };
-    private static final String[] PUBLIC_MATCHERS_POST = { "/pessoa", "/usuario", "/login" };
+    private static final String[] PUBLIC_MATCHERS_POST = { "/pessoa", "/login" };
 
     @Bean
     public SecurityFilterChain filterChain(
@@ -59,9 +59,9 @@ public class SecurityConfig {
                 })
                 // Cenário 2: Usuário ANÔNIMO ou Token Inválido (Authentication Entry Point)
                 .authenticationEntryPoint((request, response, authException) -> {
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 403
                     response.setContentType("application/json;charset=UTF-8");
-                    response.getWriter().write("{\"status\": 403, \"message\": \"Acesso negado.\"}");
+                    response.getWriter().write("{\"status\": 401, \"message\": \"Não autorizado (Token ausente ou inválido).\"}");
                 })
             )
             // ------------------------------------------
@@ -77,8 +77,23 @@ public class SecurityConfig {
     @Bean
     public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
         var configuration = new org.springframework.web.cors.CorsConfiguration();
-        configuration.applyPermitDefaultValues();
-        configuration.setAllowedMethods(Arrays.asList("POST", "GET", "PUT", "DELETE", "OPTIONS"));
+        
+        // 1. Libera as origens que você precisa (VS Code e a do Professor)
+        configuration.setAllowedOrigins(Arrays.asList(
+            "http://127.0.0.1:5500", 
+            "http://localhost:5500", 
+            "http://localhost:3000",
+            "http://127.0.0.1:3000"
+        ));
+
+        // 2. Libera os métodos
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
+
+        // 3. Libera headers (importante pro JWT passar)
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        
+        // 4. (Opcional, mas recomendado se for enviar Token)
+        configuration.setAllowCredentials(true);
 
         var source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
