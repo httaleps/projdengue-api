@@ -43,20 +43,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             @NonNull HttpStatusCode status,
             @NonNull WebRequest request) {
 
-
         ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.UNPROCESSABLE_ENTITY.value(),
-                "Validation error. Check 'errors' field for details."
+                HttpStatus.BAD_REQUEST.value(), 
+                "Erro de validação. Leia o campo 'errors' para mais detalhes."
         );
-
 
         for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
             errorResponse.addValidationError(fieldError.getField(), fieldError.getDefaultMessage());
         }
 
-
         log.warn("Erro de validação: {}", ex.getMessage());
-        return ResponseEntity.unprocessableEntity().body(errorResponse);
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
 
